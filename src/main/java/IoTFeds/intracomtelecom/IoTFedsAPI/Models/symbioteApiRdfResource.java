@@ -1,10 +1,8 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Models;
+package IoTFeds.intracomtelecom.IoTFedsAPI.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.h2020.symbiote.core.internal.RDFInfo;
 import lombok.*;
-
-import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter

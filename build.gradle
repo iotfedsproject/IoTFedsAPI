@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'IoTFeds.intracomtelecom'
-version = '0.0.1-SNAPSHOT'
+version = '1.3.4'
 sourceCompatibility = '1.8'
 
 configurations {
@@ -19,8 +19,20 @@ repositories {
 	maven { url "https://jitpack.io" }
 }
 
+//repositories {
+//    maven {
+//        url 'https://packreg.intracomtel.com/repository/ba-group'
+//        credentials {
+//            username = "cdn"
+//            password = "Cdncdncdncdn1"
+//        }
+//    }
+//}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'junit:junit:4.13.1'
+//	implementation 'org.springframework.boot:spring-boot-starter-security'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -28,11 +40,17 @@ dependencies {
 	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '3.0.0'
 	implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
 	///SymbIoTe dependencies - start
-	implementation 'com.github.symbiote-h2020:SymbIoTeLibraries:6.0.2'
+//	implementation 'com.github.symbiote-h2020:SymbIoTeLibraries:6.0.2'
+	implementation fileTree(dir: 'libs', include: ['*.jar'])
+	implementation('com.github.symbiote-h2020:SemanticMapping:[2.0,2.999]') { changing = true }
+//	implementation 'com.github.symbiote-h2020:SymbIoTeLibraries:6.0.0'
 	implementation 'com.github.symbiote-h2020:SymbIoTeSecurity:28.0.0'
 	implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.1.1'
+	compileOnly("com.querydsl:querydsl-mongodb:4.2.2")
+	compileOnly('javax.validation:validation-api:2.0.0.Final')
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
-}
+//tasks.named('test') {
+//	useJUnitPlatform()
+//
+//}

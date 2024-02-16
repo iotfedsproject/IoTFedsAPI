@@ -1,4 +1,6 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Models;
+package IoTFeds.intracomtelecom.IoTFedsAPI.models;
+
+import java.util.Map;
 
 public class UserRegistrationDetails {
 
@@ -8,6 +10,7 @@ public class UserRegistrationDetails {
     private String aam_owner_username;
     private String aam_owner_password;
     private String platformId;
+    private Map<String, String> attributes;
 
     public String getPlatformId() {
         return platformId;
@@ -55,5 +58,13 @@ public class UserRegistrationDetails {
 
     public void setNew_password(String new_password) {
         this.new_password = new_password;
+    }
+
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, String> attributes) {
+        this.attributes = attributes;
     }
 }

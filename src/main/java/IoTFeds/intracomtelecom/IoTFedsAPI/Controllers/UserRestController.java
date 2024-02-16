@@ -1,12 +1,10 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Controllers;
+package IoTFeds.intracomtelecom.IoTFedsAPI.controllers;
 
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.UserDeletionDetails;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.UserRegistrationDetails;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Utilities.Login.SymbIoTeLogin;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Utilities.UserUtils.UserService;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.UserDeletionDetails;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.UserRegistrationDetails;
+import IoTFeds.intracomtelecom.IoTFedsAPI.utilities.login.SymbIoTeLogin;
+import IoTFeds.intracomtelecom.IoTFedsAPI.utilities.user.UserService;
 import eu.h2020.symbiote.client.AbstractSymbIoTeClientFactory;
-import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.core.ci.QueryResourceResult;
 import eu.h2020.symbiote.security.commons.enums.ManagementStatus;
 import eu.h2020.symbiote.security.commons.exceptions.custom.AAMException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
@@ -45,7 +43,7 @@ public class UserRestController {
         } catch (SecurityHandlerException | AAMException e) {
             System.out.println(e.getMessage());
             return new ResponseEntity<List<String>>(Arrays.asList(e.getErrorMessage(), e.getMessage()), e.getStatusCode());
-        } catch (NoSuchAlgorithmException e){
+        } catch (NoSuchAlgorithmException e) {
             System.out.println(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
@@ -64,7 +62,7 @@ public class UserRestController {
         } catch (SecurityHandlerException | AAMException e) {
             System.out.println(e.getMessage());
             return new ResponseEntity<List<String>>(Arrays.asList(e.getErrorMessage(), e.getMessage()), e.getStatusCode());
-        } catch (NoSuchAlgorithmException e){
+        } catch (NoSuchAlgorithmException e) {
             System.out.println(e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }

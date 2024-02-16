@@ -1,0 +1,15 @@
+{
+  "FedMarketplace_id": "icomFED",
+  "GlobalMarketplace_id": true,
+  "Product_details": {},
+  "Product_id": "productX1",
+  "Reputation": 0,
+  "Resource_ids": {
+    "resource1": "platform1",
+    "resource3": "platform1"
+  },
+  "Seller": "icom1",
+  "docType": "Product",
+  "subjReputation": [],
+  "transactionCounter": 2
+}

@@ -1,18 +1,17 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Controllers;
+package IoTFeds.intracomtelecom.IoTFedsAPI.controllers;
 
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.*;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.ResourceRegistration.ResourceRegistrationResponse;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Utilities.Login.SymbIoTeLogin;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Utilities.ResourceUtils.ResourceService;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.*;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.resourceRegistration.ResourceRegistrationResponse;
+import IoTFeds.intracomtelecom.IoTFedsAPI.utilities.login.SymbIoTeLogin;
+import IoTFeds.intracomtelecom.IoTFedsAPI.utilities.resource.ResourceService;
 import eu.h2020.symbiote.client.AbstractSymbIoTeClientFactory;
 import eu.h2020.symbiote.client.interfaces.RHClient;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
-import eu.h2020.symbiote.cloud.model.internal.RdfCloudResourceList;
-import eu.h2020.symbiote.cloud.model.internal.FederationSearchResult;
 import eu.h2020.symbiote.cloud.model.internal.PlatformRegistryQuery;
 import eu.h2020.symbiote.core.ci.QueryResourceResult;
+import eu.h2020.symbiote.core.ci.SparqlQueryOutputFormat;
+import eu.h2020.symbiote.core.ci.SparqlQueryRequest;
 import eu.h2020.symbiote.core.internal.CoreQueryRequest;
 import eu.h2020.symbiote.model.cim.Observation;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
@@ -21,7 +20,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,11 +27,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("symbioteapi/resources")
@@ -206,6 +201,7 @@ public class ResourceRestController {
     public ResponseEntity<?> addL1Resource(@RequestBody iotFedsApiCloudResourceL1 l1Resource) {
 
         AbstractSymbIoTeClientFactory factory = null;
+        l1Resource = ResourceService.addAccessFilteringPolicy(l1Resource);
         try {
 
             factory = login.GetSymbIoTeFactory(l1Resource.getPlatformCredentials());
@@ -334,13 +330,26 @@ public class ResourceRestController {
     @RequestMapping(path = "/access/l1/{resourceInternalId}", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> AccessL1Resource(@ApiParam(value = "The internal Id of the resource to be retrieved, provided by the user during registration.", example = "isen1") @PathVariable String resourceInternalId, @RequestBody symbioteApiPlatformInfo platformnfo) {
+    public ResponseEntity<?> AccessL1Resource(
+            @ApiParam(value = "The internal Id of the resource to be retrieved, provided by the user during registration.", example = "isen1") @PathVariable String resourceInternalId,
+            @RequestBody symbioteApiPlatformInfo platformInfo,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Integer top
+    ) {
         try {
-            PlatformCredentials credentials = platformnfo.getPlatformCredentials();
+            PlatformCredentials credentials = platformInfo.getPlatformCredentials();
 
             AbstractSymbIoTeClientFactory factory = login.GetSymbIoTeFactory(credentials);
             ResourceService resourceService = new ResourceService(factory);
-            return new ResponseEntity<Observation>(resourceService.accessL1Resource(platformnfo.getPlatformCredentials().getLocalPlatformId(), platformnfo.getRemotePlatformId(), resourceInternalId), HttpStatus.OK);
+            return new ResponseEntity<List<Observation>>(resourceService.accessL1Resource(
+                    platformInfo.getPlatformCredentials().getLocalPlatformId(),
+                    platformInfo.getRemotePlatformId(),
+                    resourceInternalId,
+                    fromDate,
+                    toDate,
+                    top
+            ), HttpStatus.OK);
         } catch (SecurityHandlerException e) {
             return new ResponseEntity<String>(e.getErrorMessage(), e.getStatusCode());
         } catch (NoSuchAlgorithmException e) {
@@ -397,13 +406,26 @@ public class ResourceRestController {
     @RequestMapping(path = "/access/l1/Id/{resourceId}", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> AccessL1ResourceWithResourceId(@ApiParam(value = "The Id of the resource to be retrieved, provided by SymbIoTe during registration.", example = "62c591280f160e00013b7154") @PathVariable String resourceId, @RequestBody symbioteApiPlatformInfo platformnfo) {
+    public ResponseEntity<?> AccessL1ResourceWithResourceId(
+            @ApiParam(value = "The Id of the resource to be retrieved, provided by SymbIoTe during registration.", example = "62c591280f160e00013b7154") @PathVariable String resourceId,
+            @RequestBody symbioteApiPlatformInfo platformInfo,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Integer top
+    ) {
         try {
-            PlatformCredentials credentials = platformnfo.getPlatformCredentials();
+            PlatformCredentials credentials = platformInfo.getPlatformCredentials();
 
             AbstractSymbIoTeClientFactory factory = login.GetSymbIoTeFactory(credentials);
             ResourceService resourceService = new ResourceService(factory);
-            return new ResponseEntity<Observation>(resourceService.accessL1ResourceWithId(platformnfo.getPlatformCredentials().getLocalPlatformId(), platformnfo.getRemotePlatformId(), resourceId), HttpStatus.OK);
+            return new ResponseEntity<List<Observation>>(resourceService.accessL1ResourceWithId(
+                        platformInfo.getPlatformCredentials().getLocalPlatformId(),
+                        platformInfo.getRemotePlatformId(),
+                        resourceId,
+                        fromDate,
+                        toDate,
+                        top),
+                    HttpStatus.OK);
         } catch (SecurityHandlerException e) {
             return new ResponseEntity<String>(e.getErrorMessage(), e.getStatusCode());
         } catch (NoSuchAlgorithmException e) {
@@ -411,19 +433,31 @@ public class ResourceRestController {
         }
 
     }
-
+//TODO change this one
     @ApiOperation(value = "End-point to access L2 resource with a specific Id")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful access", response = Observation.class)})
     @RequestMapping(path = "/access/l2/{resourceInternalId}", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> AccessL2Resource(@PathVariable String resourceInternalId, @RequestBody symbioteApiFederationInfo federationInfo) {
+    public ResponseEntity<?> AccessL2Resource(
+            @PathVariable String resourceInternalId,
+            @RequestBody symbioteApiFederationInfo federationInfo,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Integer top
+    ) {
         try {
             PlatformCredentials credentials = federationInfo.getPlatformCredentials();
 
             AbstractSymbIoTeClientFactory factory = login.GetSymbIoTeFactory(credentials);
             ResourceService resourceService = new ResourceService(factory);
-            return new ResponseEntity<Observation>(resourceService.accessL2Resource(federationInfo.getPlatformCredentials().getLocalPlatformId(), resourceInternalId, federationInfo.getFederationId()), HttpStatus.OK);
+            return new ResponseEntity<List<Observation>>(resourceService.accessL2Resource(
+                        federationInfo.getPlatformCredentials().getLocalPlatformId(),
+                        resourceInternalId, federationInfo.getFederationId(),
+                        fromDate,
+                        toDate,
+                        top),
+                    HttpStatus.OK);
         } catch (SecurityHandlerException e) {
             return new ResponseEntity<String>(e.getErrorMessage(), e.getStatusCode());
         } catch (NoSuchAlgorithmException e) {
@@ -550,6 +584,50 @@ public class ResourceRestController {
             return new ResponseEntity<String>(e.getErrorMessage(), e.getStatusCode());
         } catch (NoSuchAlgorithmException e) {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+
+    @ApiOperation(value = "Sparql queries for the search component.")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successfully unshared", response = String.class)})
+    @RequestMapping(path = "/sparql", method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> sqarql(@RequestBody PlatformCredentials credentials,
+                                    @ApiParam(value = "A list with the resource names") @RequestParam("name") String query
+    ) {
+        AbstractSymbIoTeClientFactory factory = null;
+
+        try {
+
+            factory = login.GetSymbIoTeFactory(credentials);
+//            coreQueryRequest = CoreQueryRequest.newInstance(coreQueryRequest);
+            SparqlQueryOutputFormat outputFormat = SparqlQueryOutputFormat.RDF;//.RDF_N3;// JSON; //RDF;//RDF_N3???
+            SparqlQueryRequest sparqlQueryRequest = new SparqlQueryRequest(query, outputFormat);
+            ResourceService service = new ResourceService(factory);
+            return new ResponseEntity<String>(service.searchSparql(sparqlQueryRequest, credentials.getLocalPlatformId()), HttpStatus.OK);
+        } catch (SecurityHandlerException e) {
+            return new ResponseEntity<String>(e.getErrorMessage(), e.getStatusCode());
+        } catch (NoSuchAlgorithmException e) {
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+        }
+
+
+    }
+
+    @ApiOperation(value = "Retrieve resource interworkingServiceUrl.")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful retrieval", response = String.class)})
+    @RequestMapping(path = "/resourceurl", method = RequestMethod.POST)
+    public ResponseEntity<String> getResourceServiceUrl(@RequestParam(value = "id") String resourceId,
+                                                        @RequestBody PlatformCredentials credentials) {
+
+        try {
+            AbstractSymbIoTeClientFactory factory = login.GetSymbIoTeFactory(credentials);
+            ResourceService resourceService = new ResourceService(factory);
+            String resourceUrl = resourceService.getResourceInterworkingServiceUrl(resourceId);
+            return new ResponseEntity<>(resourceUrl, HttpStatus.OK);
+        }
+        catch(SecurityHandlerException | NoSuchAlgorithmException e){
+            return new ResponseEntity<String>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

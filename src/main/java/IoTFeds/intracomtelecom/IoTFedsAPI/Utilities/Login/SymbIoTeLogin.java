@@ -1,6 +1,6 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Utilities.Login;
+package IoTFeds.intracomtelecom.IoTFedsAPI.utilities.login;
 
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.PlatformCredentials;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.PlatformCredentials;
 import eu.h2020.symbiote.client.AbstractSymbIoTeClientFactory;
 import eu.h2020.symbiote.client.AbstractSymbIoTeClientFactory.Type;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;

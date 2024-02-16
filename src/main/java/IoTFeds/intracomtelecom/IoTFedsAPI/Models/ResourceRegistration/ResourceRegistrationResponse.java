@@ -1,4 +1,4 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Models.ResourceRegistration;
+package IoTFeds.intracomtelecom.IoTFedsAPI.models.resourceRegistration;
 
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import lombok.AllArgsConstructor;

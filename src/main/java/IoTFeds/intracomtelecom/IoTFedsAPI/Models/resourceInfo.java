@@ -1,4 +1,4 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Models;
+package IoTFeds.intracomtelecom.IoTFedsAPI.models;
 
 public class resourceInfo {
     private String internalId;

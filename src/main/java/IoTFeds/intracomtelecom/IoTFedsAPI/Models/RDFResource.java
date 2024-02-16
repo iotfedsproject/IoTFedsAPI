@@ -1,8 +1,7 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Models;
+package IoTFeds.intracomtelecom.IoTFedsAPI.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import lombok.*;
 import org.springframework.data.annotation.Id;

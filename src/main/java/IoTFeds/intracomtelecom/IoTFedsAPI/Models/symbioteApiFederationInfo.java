@@ -1,4 +1,4 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Models;
+package IoTFeds.intracomtelecom.IoTFedsAPI.models;
 
 public class symbioteApiFederationInfo {
     private PlatformCredentials platformCredentials;

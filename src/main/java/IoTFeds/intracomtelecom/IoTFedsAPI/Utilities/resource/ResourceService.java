@@ -1,32 +1,30 @@
-package IoTFeds.intracomtelecom.IoTFedsAPI.Utilities.ResourceUtils;
+package IoTFeds.intracomtelecom.IoTFedsAPI.utilities.resource;
 
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.PlatformCredentials;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.ResourceRegistration.ResourceRegistrationResponse;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.iotFedsApiCloudResourceL1;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.shareResourceModel;
-import IoTFeds.intracomtelecom.IoTFedsAPI.Models.symbioteApiRdfResource;
-import IoTFeds.intracomtelecom.IoTFedsAPI.services.Baas.BaasClient;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.*;
+import IoTFeds.intracomtelecom.IoTFedsAPI.models.resourceRegistration.ResourceRegistrationResponse;
+import IoTFeds.intracomtelecom.IoTFedsAPI.services.baas.BaasClient;
 import eu.h2020.symbiote.client.AbstractSymbIoTeClientFactory;
 import eu.h2020.symbiote.client.interfaces.*;
 import eu.h2020.symbiote.cloud.model.internal.*;
 import eu.h2020.symbiote.core.ci.QueryResourceResult;
 import eu.h2020.symbiote.core.ci.QueryResponse;
+import eu.h2020.symbiote.core.ci.SparqlQueryRequest;
+import eu.h2020.symbiote.core.ci.SparqlQueryResponse;
 import eu.h2020.symbiote.core.internal.CoreQueryRequest;
 import eu.h2020.symbiote.core.internal.RDFInfo;
 import eu.h2020.symbiote.core.internal.cram.ResourceUrlsResponse;
 import eu.h2020.symbiote.model.cim.Observation;
+import eu.h2020.symbiote.security.accesspolicies.common.AccessPolicyType;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -47,7 +45,7 @@ public class ResourceService {
 
     private static Log log = LogFactory.getLog(ResourceService.class);
 
-    private Properties properties =  new Properties();
+    private Properties properties = new Properties();
 
     public ResourceService(AbstractSymbIoTeClientFactory clientFactory) {
 
@@ -127,40 +125,27 @@ public class ResourceService {
         return result.getResources();
     }
 
-    public Observation accessL1Resource(String homePlatformId, String platformId, String resourceInternalId) {
-//        SearchClient searchClient = factory.getSearchClient();
+    public List<Observation> accessL1Resource(String homePlatformId, String platformId, String resourceInternalId, String fromDate, String toDate, Integer topObservations) {
         String resourceId = getResourceIdFromInternalId(platformId, resourceInternalId);
         CRAMClient cramClient = factory.getCramClient();
         RAPClient rapClient = factory.getRapClient();
-
 
         /*
         Search for resources in the Platform Registry of the specified platform
          */
         // The set of platforms from which we are going to request credentials for our requests
         Set<String> platformIds = new HashSet<>(Collections.singletonList(homePlatformId));
-//        // Create the request
-//        CoreQueryRequest coreQueryRequest = new CoreQueryRequest.Builder()
-//                .platformId(platformId).id(resourceId)
-//                .build();
-//
-//        QueryResponse queryResponse = searchClient.search(coreQueryRequest,false, platformIds);
-//        List<QueryResourceResult> result = queryResponse.getResources().stream().collect(Collectors.toList());
 
-//
-//        try {
-//            System.out.println(om.writeValueAsString(queryResponse));
-//        } catch (JsonProcessingException e) {
-//            e.printStackTrace();
-//        }
-//
-//        if (queryResponse.getResources().size() == 0) {
-//            System.out.println("Could not find any resources");
-//        }
         ResourceUrlsResponse resourceUrlsResponse = cramClient.getResourceUrl(resourceId, false, platformIds);
         String resourceUrl = resourceUrlsResponse.getBody().get(resourceId);
-        Observation observation = rapClient.getLatestObservation(resourceUrl, false, platformIds);
-
+        List<Observation> observation = new ArrayList<>();
+        if (fromDate != null && toDate != null && topObservations != null) {
+            observation = rapClient.getObservationsByQuery(resourceUrl, topObservations, fromDate, toDate, false, platformIds);
+        } else if (fromDate == null && toDate == null && topObservations != null) {
+            observation = rapClient.getTopObservations(resourceUrl, topObservations, false, platformIds);
+        } else {
+            observation = Collections.singletonList(rapClient.getLatestObservation(resourceUrl, false, platformIds));
+        }
         return observation;
     }
 
@@ -184,18 +169,24 @@ public class ResourceService {
         rapClient.invokeService(resourceUrl, body, false, platformIds);
     }
 
-    public Observation accessL1ResourceWithId(String homePlatformId, String platformId, String resourceId) {
+    public List<Observation> accessL1ResourceWithId(String homePlatformId, String platformId, String resourceId, String fromDate, String toDate, Integer topObservations) {
         CRAMClient cramClient = factory.getCramClient();
         RAPClient rapClient = factory.getRapClient();
         Set<String> platformIds = new HashSet<>(Collections.singletonList(homePlatformId));
         ResourceUrlsResponse resourceUrlsResponse = cramClient.getResourceUrl(resourceId, false, platformIds);
         String resourceUrl = resourceUrlsResponse.getBody().get(resourceId);
-        Observation observation = rapClient.getLatestObservation(resourceUrl, false, platformIds);
-
+        List<Observation> observation = new ArrayList<>();
+        if (fromDate != null && toDate != null && topObservations != null) {
+            observation = rapClient.getObservationsByQuery(resourceUrl, topObservations, fromDate, toDate, false, platformIds);
+        } else if (fromDate == null && toDate == null && topObservations != null) {
+            observation = rapClient.getTopObservations(resourceUrl, topObservations, false, platformIds);
+        } else {
+            observation = Collections.singletonList(rapClient.getLatestObservation(resourceUrl, false, platformIds));
+        }
         return observation;
     }
 
-    public Observation accessL2Resource(String homePlatformId, String resourceInternalId, String federationId) {
+    public List<Observation> accessL2Resource(String homePlatformId, String resourceInternalId, String federationId, String fromDate, String toDate, Integer topObservations) {
         Set<String> platformIds = new HashSet<>(Collections.singletonList(homePlatformId));
         PRClient searchClient = factory.getPRClient(homePlatformId);
         RAPClient rapClient = factory.getRapClient();
@@ -214,7 +205,14 @@ public class ResourceService {
         FederatedResourceInfo resourceInfo = federatedResource.getFederatedResourceInfoMap().get(federationId);
         String resourceUrl = resourceInfo.getoDataUrl();
 
-        Observation observation = rapClient.getLatestObservation(resourceUrl, false, platformIds);
+        List<Observation> observation = new ArrayList<>();
+        if (fromDate != null && toDate != null && topObservations != null) {
+            observation = rapClient.getObservationsByQuery(resourceUrl, topObservations, fromDate, toDate, false, platformIds);
+        } else if (fromDate == null && toDate == null && topObservations != null) {
+            observation = rapClient.getTopObservations(resourceUrl, topObservations, false, platformIds);
+        } else {
+            observation = Collections.singletonList(rapClient.getLatestObservation(resourceUrl, false, platformIds));
+        }
         return observation;
     }
 
@@ -310,7 +308,7 @@ public class ResourceService {
         return list;
     }
 
-    public ResponseEntity<?> shareResource(shareResourceModel shareResourceModel){
+    public ResponseEntity<?> shareResource(shareResourceModel shareResourceModel) {
         RHClient rhClient = factory.getRHClient(shareResourceModel.getPlatformCredentials().getLocalPlatformId());
 
 
@@ -323,7 +321,7 @@ public class ResourceService {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    public ResponseEntity<?> unShareResource(shareResourceModel unShareResourceModel){
+    public ResponseEntity<?> unShareResource(shareResourceModel unShareResourceModel) {
         RHClient rhClient = factory.getRHClient(unShareResourceModel.getPlatformCredentials().getLocalPlatformId());
         List<String> resources = new ArrayList<>();
         resources.add(unShareResourceModel.getResourceInternalId());
@@ -333,7 +331,7 @@ public class ResourceService {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    public ResponseEntity<?> registerL1Resource(iotFedsApiCloudResourceL1 l1Resource){
+    public ResponseEntity<?> registerL1Resource(iotFedsApiCloudResourceL1 l1Resource) {
         ModelMapper modelMapper = new ModelMapper();
         CloudResource cloudResource = modelMapper.map(l1Resource.getCloudResourceL1(), CloudResource.class);
 
@@ -348,20 +346,22 @@ public class ResourceService {
             cloudResources.add(registeredResource);
             response.setCloudResources(cloudResources);
             // register the resource to baas
-            if(baasIntegration){
-                ResponseEntity baasResponse = registerResourceToBaas(l1Resource.getPlatformCredentials().getUsername(), l1Resource.getPlatformCredentials().getLocalPlatformId(),
-                        registeredResource.getResource().getId());
-                if(baasResponse.getStatusCode() != HttpStatus.OK)
-                    errors.put("Baas error for Resource " + registeredResource.getResource().getId(), baasResponse.getBody().toString());
+            ResponseEntity baasResponse = registerResourceToBaas(l1Resource.getPlatformCredentials().getLocalPlatformId(),
+                    registeredResource.getResource().getId(),
+                    l1Resource.getPlatformCredentials().getUsername()
+                    );
+            if (baasIntegration && baasResponse.getStatusCode() != HttpStatus.OK) {
+                log.error("Baas status for the request is " + baasResponse.getStatusCode());
+                errors.put("Baas error for Resource " + registeredResource.getResource().getId(), baasResponse.getBody().toString());
             }
             response.setErrors(errors);
-            return new ResponseEntity<ResourceRegistrationResponse>(response , HttpStatus.OK);
-        }catch (Exception e) {
+            return new ResponseEntity<ResourceRegistrationResponse>(response, HttpStatus.OK);
+        } catch (Exception e) {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    public ResponseEntity<?> registerL1RDFResource(symbioteApiRdfResource rdfResource){
+    public ResponseEntity<?> registerL1RDFResource(symbioteApiRdfResource rdfResource) {
         try {
 
             RHClient rhClient = factory.getRHClient(rdfResource.getPlatformCredentials().getLocalPlatformId());
@@ -373,16 +373,20 @@ public class ResourceService {
 
             response.setCloudResources(cloudResources);
             // register the resource to baas
-            if(baasIntegration){
-                for(CloudResource cloudResource:cloudResources){
-                    ResponseEntity baasResponse = registerResourceToBaas(rdfResource.getPlatformCredentials().getUsername(), rdfResource.getPlatformCredentials().getLocalPlatformId(),
-                            cloudResource.getResource().getId());
-                    if(baasResponse.getStatusCode() != HttpStatus.OK)
-                        errors.put("Baas error for Resource " + cloudResource.getResource().getId(), baasResponse.getBody().toString());
+            if (baasIntegration) {
+                for (CloudResource cloudResource : cloudResources) {
+                    ResponseEntity baasResponse = registerResourceToBaas(
+                            rdfResource.getPlatformCredentials().getLocalPlatformId(),
+                            cloudResource.getResource().getId(),
+                            rdfResource.getPlatformCredentials().getUsername()
+                    );
+                    if (baasResponse.getStatusCode() != HttpStatus.OK)
+                        log.error("Baas status for the request is " + baasResponse.getStatusCode());
+                    errors.put("Baas error for Resource " + cloudResource.getResource().getId(), baasResponse.getBody().toString());
                 }
             }
             response.setErrors(errors);
-            return new ResponseEntity<ResourceRegistrationResponse>(response , HttpStatus.OK);
+            return new ResponseEntity<ResourceRegistrationResponse>(response, HttpStatus.OK);
         } catch (UnsupportedEncodingException e) {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
@@ -390,7 +394,7 @@ public class ResourceService {
         }
     }
 
-    public ResponseEntity<?> deleteL1Resource(String resourceInternalId,PlatformCredentials credentials){
+    public ResponseEntity<?> deleteL1Resource(String resourceInternalId, PlatformCredentials credentials) {
         Map<String, String> errors = new HashMap<>();
         ResourceRegistrationResponse response = new ResourceRegistrationResponse();
 
@@ -402,43 +406,78 @@ public class ResourceService {
             cloudResources.add(deletedResource);
             response.setCloudResources(cloudResources);
             // register the resource to baas
-            if(baasIntegration){
-                ResponseEntity baasResponse = deleteResourceFromBaas(deletedResource.getResource().getId());
-                if(baasResponse.getStatusCode() != HttpStatus.OK)
+            if (baasIntegration) {
+                ResponseEntity baasResponse = deleteResourceFromBaas(credentials.getLocalPlatformId(), deletedResource.getResource().getId());
+                if (baasResponse.getStatusCode() != HttpStatus.OK)
                     errors.put("Baas error for Resource " + deletedResource.getResource().getId(), baasResponse.getBody().toString());
             }
             response.setErrors(errors);
-            return new ResponseEntity<ResourceRegistrationResponse>(response , HttpStatus.OK);
-        }catch (Exception e) {
+            return new ResponseEntity<ResourceRegistrationResponse>(response, HttpStatus.OK);
+        } catch (Exception e) {
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    private ResponseEntity<?> registerResourceToBaas(String username, String platformId, String resourceId){
+    private ResponseEntity<?> registerResourceToBaas(String platformId, String resourceId, String user) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("device_id  ", resourceId);
-        parameters.add("platform_id ", platformId);
-        parameters.add("associated_user_id  ", username);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
-        String body = "";
-        HashMap<String, List<String>> assosiated_users = new HashMap<String, List<String>>();
-        assosiated_users.put(username, new ArrayList<>());
-        body = assosiated_users.toString();
-        ResponseEntity<?>  response = baasClient.makeBaasHttpRequest(baasBaseUrl, registerResourceToBC, HttpMethod.PATCH , body, headers, parameters, String.class);
+        HashMap<String, String> body = new HashMap<>();
+        body.put("device_id", resourceId);
+        body.put("platform_id", platformId);
+        body.put("user", user);
+
+
+        ResponseEntity<?> response = baasClient.makeBaasHttpRequest(baasBaseUrl, registerResourceToBC, HttpMethod.POST, body, parameters);
         return response;
     }
 
-    private ResponseEntity<?> deleteResourceFromBaas(String resourceId){
+    private ResponseEntity<?> deleteResourceFromBaas(String platformId, String resourceId) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("device_id  ", resourceId);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
-        String body = "";
-        ResponseEntity<?>  response = baasClient.makeBaasHttpRequest(baasBaseUrl, deleteResourceFromBC, HttpMethod.DELETE , body, headers, parameters, String.class);
+        HashMap<String, String> body = new HashMap<>();
+        body.put("device_id", resourceId);
+        body.put("platform_id", platformId);
+
+        ResponseEntity<?> response = baasClient.makeBaasHttpRequest(baasBaseUrl, registerResourceToBC, HttpMethod.DELETE, body, parameters);
         return response;
+    }
+
+    public String searchSparql(SparqlQueryRequest sparqlQueryRequest, String homePlatformId) {
+        SearchClient searchClient = factory.getSearchClient();
+        Set<String> platformIds = new HashSet<>(Collections.singletonList(homePlatformId));
+        SparqlQueryResponse queryResponse = searchClient.search(sparqlQueryRequest, false, platformIds);
+        return queryResponse.getBody();
+    }
+
+    public static iotFedsApiCloudResourceL1 addAccessFilteringPolicy(iotFedsApiCloudResourceL1 iotFedsApiCloudResourceL1) {
+
+
+        Map<String, String> requiredClaims = new HashMap<>();
+        requiredClaims.put("iss", "SymbIoTe_Core_AAM");
+        requiredClaims.put("sub", "marketplace");
+
+        CloudResourceL1 cloudResourceL1 = iotFedsApiCloudResourceL1.getCloudResourceL1();
+        try {
+            cloudResourceL1.setAccessPolicy(new SingleTokenAccessPolicySpecifier(
+                    AccessPolicyType.SLHTIBAP,
+                    requiredClaims
+            ));
+
+            cloudResourceL1.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+
+        } catch (InvalidArgumentsException e) {
+            e.printStackTrace();
+        }
+
+        iotFedsApiCloudResourceL1.setCloudResourceL1(cloudResourceL1);
+
+        return iotFedsApiCloudResourceL1;
+    }
+
+    public String getResourceInterworkingServiceUrl(String resourceId){
+        CRAMClient cramClient = factory.getCramClient();
+        ResourceUrlsResponse resourceUrlsResponse = cramClient.getResourceUrl(resourceId, false, new HashSet<>(Collections.singletonList("SymbIoTe_Core_AAM")));
+        return resourceUrlsResponse.getBody().get(resourceId);
     }
 
 }

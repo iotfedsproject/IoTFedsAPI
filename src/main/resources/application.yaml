@@ -9,13 +9,12 @@ spring:
 
 logging:
   level:
-    ROOT: DEBUG
+    ROOT: INFO
+
 configuration:
   keystorePath: testKeystore.jks
   keystorePassword: testKeystore
-#  coreAAMAddress: https://iotfeds-symbiotecore.intracom-telecom.com
-#  coreAAMAddress: https://intracom-core.symbiote-h2020.eu
-  coreAAMAddress: https://safety4rail-symbiotecore.intracom-telecom.com
+  coreAAMAddress: https://symbiote-core.iotfeds.intracom-telecom.com
 
 springfox:
   documentation:
